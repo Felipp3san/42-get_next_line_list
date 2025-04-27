@@ -28,8 +28,10 @@ int	main(int argc, char **argv)
 		fd = open(filename, O_RDONLY);
 		if (fd != -1)
 		{
-			while ((line = get_next_line(fd)))
+			line = get_next_line(fd);
+			while (line)
 			{
+				line = get_next_line(fd);
 				printf("%s", line);
 				free(line);
 				count++;

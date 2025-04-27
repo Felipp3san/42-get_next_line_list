@@ -115,7 +115,7 @@ char	*get_next_line(int fd)
 		if (read_bytes > 0)
 			result = store_buffer(&stash, buffer);
 	}
-	if (read_bytes == 0 || result == -1 || read_bytes == -1)
+	if (read_bytes == -1 || result == -1)
 		return (NULL);
 	return (extract_line(&stash));
 }
