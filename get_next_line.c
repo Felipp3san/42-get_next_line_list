@@ -6,13 +6,13 @@
 /*   By: fde-alme <fde-alme@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/26 23:57:28 by fde-alme          #+#    #+#             */
-/*   Updated: 2025/04/27 01:25:28 by fde-alme         ###   ########.fr       */
+/*   Updated: 2025/05/05 18:58:33 by fde-alme         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-int	find_newline(char *buffer, ssize_t read_bytes)
+static int	find_newline(char *buffer, ssize_t read_bytes)
 {
 	ssize_t	i;
 
@@ -26,21 +26,20 @@ int	find_newline(char *buffer, ssize_t read_bytes)
 	return (0);
 }
 
-int	store_buffer(t_list **stash, char *buffer, ssize_t read_bytes)
+static int	store_buffer(t_list **stash, char *buffer, ssize_t read_bytes)
 {
 	t_list	*node;
 	char	*content;
 	ssize_t	i;
 
 	i = 0;
+	if (read_bytes <= 0)
+		return (0);
 	while (i < read_bytes)
 	{
 		content = (char *) malloc(sizeof(char));
 		if (!content)
-		{
-			ft_lstclear(stash, free);
 			return (-1);
-		}
 		*content = buffer[i];
 		node = ft_lstnew(content);
 		if (!node)
@@ -51,7 +50,7 @@ int	store_buffer(t_list **stash, char *buffer, ssize_t read_bytes)
 	return (1);
 }
 
-size_t	count_until_nextline(t_list **stash)
+static size_t	count_until_nextline(t_list **stash)
 {
 	t_list	*cursor;
 	size_t	size;
@@ -69,7 +68,7 @@ size_t	count_until_nextline(t_list **stash)
 	return (size);
 }
 
-char	*extract_line(t_list **stash)
+static char	*extract_line(t_list **stash)
 {
 	char	*line;
 	t_list	*temp;
@@ -81,9 +80,9 @@ char	*extract_line(t_list **stash)
 	{
 		line = (char *) malloc(size + 1);
 		if (!line)
-			return (NULL);
+			return (ft_lstclear(stash, free), NULL);
 		i = 0;
-		while (i < size)
+		while (i < size && *stash)
 		{
 			line[i] = *(char *)(*stash)->content;
 			temp = *stash;
@@ -103,24 +102,23 @@ char	*get_next_line(int fd)
 	ssize_t			read_bytes;
 	char			*buffer;
 	int				result;
-	int				found_newline;
+	int				found_nl;
 
 	buffer = (char *)malloc(BUFFER_SIZE);
 	if (!buffer)
-		return (NULL);
+		return (ft_lstclear(&stash, free), NULL);
 	read_bytes = 1;
-	found_newline = 0;
-	while (read_bytes > 0 && !found_newline)
+	found_nl = 0;
+	while (read_bytes > 0 && found_nl == 0)
 	{
 		read_bytes = read(fd, buffer, BUFFER_SIZE);
 		result = store_buffer(&stash, buffer, read_bytes);
 		if (read_bytes == -1 || result == -1)
 		{
 			ft_lstclear(&stash, free);
-			free(buffer);
-			return (NULL);
+			return (free(buffer), NULL);
 		}
-		found_newline = find_newline(buffer, read_bytes);
+		found_nl = find_newline(buffer, read_bytes);
 	}
 	free(buffer);
 	return (extract_line(&stash));
